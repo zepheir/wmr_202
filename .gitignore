@@ -1,0 +1,9 @@
+# xcode files
+
+wmr_202/Builds/*
+
+wmr_202/Configurations/*
+
+wmr_202/Makefiles/*
+
+wmr_202/Utilities/*
