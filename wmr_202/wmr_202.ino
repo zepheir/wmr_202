@@ -9,7 +9,7 @@
 /// @author		Samuel Gao
 /// @author		Samuel Gao
 /// @date		2017/4/28 16:45
-/// @version	<#version#>
+/// @version	2.0.2
 ///
 /// @copyright	(c) Samuel Gao, 2017年
 /// @copyright	GNU General Public Licence
@@ -22,13 +22,14 @@
 /// @file		wmr_202.ino
 /// @brief		Main sketch
 ///
-/// @details	<#details#>
+/// @details	这个版本是希望可以建立一个与服务器可以查询和通讯的wmr程序版本
+///             
 /// @n @a		Developed with [embedXcode+](http://embedXcode.weebly.com)
 ///
 /// @author		Samuel Gao
 /// @author		Samuel Gao
 /// @date		2017/4/28 16:45
-/// @version	<#version#>
+/// @version	2.0.2
 ///
 /// @copyright	(c) Samuel Gao, 2017年
 /// @copyright	GNU General Public Licence
