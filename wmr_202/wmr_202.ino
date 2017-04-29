@@ -418,13 +418,18 @@ void loop()
             // 刷新SIM808的信号强度
             sim808.getSignalLevel();
             
-            // 10s
+            // 为了与服务器之间的稳定操作, 采用10秒的单步运行 (5*2=10)
             if (simTemp1<2) {
                 simTemp1++;
             }else{
                 simTemp1=0;
+                
+                // 总的操作步骤为20步, 其中5步为有SIM操作和数据连接
                 switch (simStep) {
-                        // 连接模块状态初始化
+                    
+                    // TODO: 连接模块状态初始化
+                    // 采用直接建立TCP链接的方式
+                    // 如果使用先建立场景貌似有些问题, 所以采用了直接建立TCP服务器的方式
                     case SIM_TCP_0:
 //                        Serial.println(F("AT+CSTT=\"CMNET\""));
 //                        delay(500);
@@ -438,58 +443,75 @@ void loop()
 //
 //                    // 连接服务器
 //                    case SIM_TCP_1:
+                        // 连接服务器, 建立TCP链接
                         Serial.print(F("AT+CIPSTART=\"TCP\",\""));
                         Serial.print(TCP_SERVER);
                         Serial.print(F("\",\""));
                         Serial.print(TCP_PORT);
                         Serial.println(F("\""));
-                        //                        sim808.TCPConnect(TCP_SERVER, TCP_PORT);
+//                        sim808.TCPConnect(TCP_SERVER, TCP_PORT); //sim模块程序调用方式
                         
+                        // 下一步
                         simStep = SIM_TCP_2;
                         break;
                         
-                        // 发送请求
+                    // TODO: 发送请求, REQ, 并且接受指令
                     case SIM_TCP_2:
+                        // 发送指令
                         Serial.println(F("AT+CIPSEND"));
                         delay(500);
                         Serial.print(F("{\"TYPE\":\"REQ\",\"IMEI\":\""));
                         Serial.print(sim808.getIMEI());
                         Serial.println(F("\"}\x1a"));
                         
+                        // 过滤其他信息
                         sim808.readline(500);
                         sim808.readline(500); // >
                         sim808.readline(500); //
                         sim808.readline(500); //
                         sim808.readline(500); // SEND OK
                         
+                        // 接收从服务器来的数据
                         sim808.readline(500); // recived
                         
+                        // 将信息保存至strSIMInfo
                         strncpy(strSIMInfo, sim808.replybuffer, 8);
                         
                         // DEBUG: 串口打印数据
                         Serial.print("=>");
                         Serial.println(strSIMInfo);
                         
+                        // 下一步
                         simStep = SIM_TCP_3;
                         break;
                         
-                        // 收到命令,分析命令
+                    // TODO: 收到命令,分析命令
+                    // @描述: 如果
                     case SIM_TCP_3:
+                        // DEBUG: 串口打印数据
                         Serial.print("cmp str: ");
                         Serial.println(strSIMInfo);
+                        
+                        // 判断是否收到的是 "READALL\0"
                         if ( strcmp(strSIMInfo, "READALL")==0) {
+                            // DEBUG: 串口打印数据
                             Serial.println("read all data");
+                            
+                            // 下一步发送数据
                             simStep = SIM_TCP_4; // 发送所有的数据包
                             break;
                         }else if (strcmp(strSIMInfo, "CH")){
                             ;
                         }
+                        
+                        // 下一步, 如果不是发送数据, 去关闭链接
                         simStep = SIM_TCP_10;
                         break;
                         
-                        // 发送数据包
+                    // TODO: 发送数据包
                     case SIM_TCP_4:
-                        //                        sim808.TCPSendDataPack(sim808.getIMEI(), 100, 200, 300, 400);
+                        // 发送数据
+//                        sim808.TCPSendDataPack(sim808.getIMEI(), 100, 200, 300, 400);
                         Serial.println(F("AT+CIPSEND"));
                         delay(500);
                         
@@ -506,23 +528,27 @@ void loop()
                         Serial.print(wmr.data.ch3);
                         Serial.println(F("\"}\x1A"));
                         
+                        // 下一步, 关闭连接
                         simStep = SIM_TCP_10;
                         break;
                         
-                        //
+                    // TODO: 关闭链接和场景
                     case SIM_TCP_10:
                         simStep++;
-                        //                        simStep = SIM_TCP_OFF;
+//                        simStep = SIM_TCP_OFF;
                         sim808.TCPShut();
                         break;
                         
                         
-                        // 断开连接
+                    // TODO: 断开连接, 重新启动连接程序
                     case SIM_TCP_OFF:
                         sim808.TCPShut();
+                        
+                        // 下一步
                         simStep = SIM_TCP_0;
                         break;
-                        
+                    
+                    // TODO:等待重新通讯
                     default:
                         simStep++;
                         break;
