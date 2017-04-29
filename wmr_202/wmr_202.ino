@@ -229,15 +229,23 @@ void setup()
 // Add loop code
 void loop()
 {
-    
-    // Initial step
+    //-----------------------------------------------------------------------
+    // TODO: 常规时钟, 每2秒钟执行一次程序
+    // @Notice: 需要注意的是每一步的执行时间不能超过2秒钟,
+    //          而且综合考虑其他程序的执行时间, 希望可以在更短的时间内完成单组程序
+    //
     static unsigned long timerInitial = millis();
     if (millis()- timerInitial >= 2000) {
         timerInitial = millis();
         
+        // TODO: 每2秒慢闪, 初始化循环指示灯
         if(statement != SYS_RUN) blinkLED();
         
+        // TODO: 初始化显示模块和SIM模块
+        // 初始化开始
         switch (statement) {
+            // TODO: 初始化显示模块
+            // 显示输出: 初始化页面
             case INITIAL_DISPLAY:
                 page = PAGE_WMR;
                 strInitialInfo="Initial Display: OK!";
@@ -245,67 +253,107 @@ void loop()
                 statement = INITIAL_SIM808_1;
                 break;
                 
+            // TODO: 开始初始化SIM模块
+            // 执行动作: 控制POWERKEY, 给SIM模块上电
+            // 显示输出: 初始化页面, 显示 "Waiting: "
             case INITIAL_SIM808_1:
-                // 给sim808模块上点启动
+                // 显示输出
                 strInitialInfo="Waiting: ";
                 strInitialInfo+=simTemp1;
                 picture_loop(drawInitialPage);
-                //                // 如果之前模块没有上电，则给上电模块启动
-                //                sim808.flushInput();
-                //                if (!sim808.sendCheckReply(F("ATE0"), F("OK"), 500)) {
-                //                    sim808.simPwrUpDown(SIM_PWR_PIN);
-                //                }
-                sim808.simPwrUpDown(SIM_PWR_PIN);
+                
+                // 给sim808模块上点启动
+//                // 如果之前模块没有上电，则给上电模块启动
+//                sim808.flushInput();
+//                if (!sim808.sendCheckReply(F("ATE0"), F("OK"), 500)) {
+//                    sim808.simPwrUpDown(SIM_PWR_PIN);
+//                }
+                sim808.simPwrUpDown(SIM_PWR_PIN); // 直接上电
+                
+                // 下一步
                 statement = INITIAL_SIM808_2;
                 break;
-                
+            
+            // TODO: 等待SIM模块完成初始化
+            // 执行动作: 输出 ATE0 命令, 关闭SIM模块的ECHO功能
+            // 显示输出: 初始化页面, 并显示"Waiting: 1" => "Waiting: 5"
+            // 这个过程大概需要十秒钟
             case INITIAL_SIM808_2:
-                //等10秒
+                // 循环5次, 大约10秒
                 if (simTemp1<5) {
                     // 设置sim808回复模式：echo off
                     sim808.sendCheckReply(F("ATE0"), F("OK"), 500);
+                    
+                    // 显示输出
                     simTemp1++;
                     strInitialInfo="Waiting: ";
                     strInitialInfo+=simTemp1;
                     picture_loop(drawInitialPage);
+                    
                 }else{
+                    
+                    // 下一步
                     statement = INITIAL_SIM808_3;
                     simTemp1=0;
                 }
                 break;
-                
+            
+            // TODO: 读取SIM模块的IMEI值
+            // 执行动作: 调用readIMEI(), 读取SIM模块IMEI
+            // 显示输出: 初始化页面, 并显示读取状态.
+            //          如果读取失败, 显示 "IMEI READ FAIL!";
+            //          如果读取成功, 显示IMEI
             case INITIAL_SIM808_3:
                 // 读取IMEI
                 if(sim808.readIMEI()==0){
+                    
+                    // 如果读取失败, 显示 "IMEI READ FAIL!"
                     strInitialInfo="IMEI READ FAIL!";
                     picture_loop(drawInitialPage);
+                    
+                    // 没有下一步
                     break;
                 }
+                
+                // 读取成功, 显示IMEI内容
                 strInitialInfo="IMEI:";
                 strInitialInfo+=sim808.getIMEI();
                 picture_loop(drawInitialPage);
+                
+                // 下一步
                 statement = INITIAL_SIM808_4;
                 break;
-                
+            
+            // TODO: 读取SIM讯号强度
+            // 执行动作: 调用sim808.getSignalLevel(), 读取信号质量
+            // 显示输出: 初始化页面, 显示信号的强弱指示
             case INITIAL_SIM808_4:
                 // 读取GPRS信号
                 sim808.getSignalLevel();
+                
+                // 显示输出
                 strInitialInfo="Get Signal Level: ";
                 strInitialInfo+=sim808.signalLevel;
                 picture_loop(drawInitialPage);
+                
+                // 下一步
                 statement = INITIAL_SIM808_5;
                 break;
-                
+            
+            // TODO: 初始化结束
+            // 显示输出: 初始化页面, 显示 "SIM Module OK!"
             case INITIAL_SIM808_5:
-                // 通讯模块初始化完毕
+                // 显示输出
                 strInitialInfo="SIM Module OK!";
-                //                strInitialInfo+=sim808.replybuffer;
-                //                strInitialInfo="Get Signal Level: ";
                 picture_loop(drawInitialPage);
+                
+                // 下一步
                 statement = INITIAL_OK;
                 break;
-                
+            
+            // TODO: 进入正常循环
             case INITIAL_OK:
+                // 下一步
                 statement = SYS_RUN;
                 break;
             default:
@@ -313,24 +361,39 @@ void loop()
         }
     }
     
+    //------------------------------------------------------------------------------
+    // TODO: 主循环, 包括
+    //      - 读取键盘状态
+    //      - 显示刷新
+    //      - 与服务器通信
+    // @Description: 在完成了初始化之后, 显示和SIM模块都可以准备工作了
+    //               主循环的工作包括 读取键盘状态 显示刷新 服务器通讯
+    //               - 键盘读取: 采用的是AD输入的方法, 驱动函数在SANJI模块里面, 刷新频率200ms
+    //               - 显示刷新: 频率是500ms, 配合500ms快闪指示灯
+    //               - 服务器通讯: 处理程序包括TCP初始化, 内容请求, 数据发送等 刷新频率是5000ms
+    //
+    // @Notic: 因为所有最小刷新频率是200ms, 所以原则上, 所有程序模块的运行周期都应该小于200ms
+    //
     if (statement == SYS_RUN) {
-        // 200ms Timer
+        
+        // TODO: 读取键盘状态
+        // 200ms时钟
         static unsigned long timer200ms = millis();
         if(millis() - timer200ms >= 200){
             timer200ms = millis();
             
-            // 读取 joyStick 的数值
+            // 读取 joyStick 的数值 (键盘状态, 包括上,下,左,右,按下和悬空6种状态)
             joyStick = myDev.readJoystick();
             
-            // Keyboard actions
-            //        if(joyStick == PUSH && page == PAGE_WMR) {wmr.clearAll();}
-            //        if(joyStick == RIGHT) page = PAGE_GPRS;
-            //        if(joyStick == LEFT) page = PAGE_WMR;
+//            // Keyboard actions (从旧的程序里面复制过来的)
+//            if(joyStick == PUSH && page == PAGE_WMR) {wmr.clearAll();}
+//            if(joyStick == RIGHT) page = PAGE_GPRS;
+//            if(joyStick == LEFT) page = PAGE_WMR;
             
         }
         
-        
-        // 500ms Timer
+        // TODO: 显示刷新
+        // 500ms时钟
         static unsigned long timer500ms = millis();
         if(millis() - timer500ms >= 500){
             timer500ms = millis();
@@ -341,12 +404,13 @@ void loop()
             
             // OLED 显示
             if(page == PAGE_WMR) picture_loop(drawWmrPage);
-            delay(100);
+            delay(100); // 显示稳固, 避免其他干扰, 或许可以改成10ms或20ms
             
             
         }
         
-        // 5000ms Timer
+        // TODO: 服务器通讯
+        // 5000ms时钟
         static unsigned long timer5000ms = millis();
         if(millis() - timer5000ms >= 5000){
             timer5000ms = millis();
@@ -362,18 +426,18 @@ void loop()
                 switch (simStep) {
                         // 连接模块状态初始化
                     case SIM_TCP_0:
-                        //                        Serial.println(F("AT+CSTT=\"CMNET\""));
-                        //                        delay(500);
-                        //                        Serial.println(F("AT+CIICR"));
-                        //                        delay(500);
-                        //                        Serial.println(F("AT+CIFSR"));
-                        //                        delay(2000);
-                        //
-                        //                        simStep = SIM_TCP_1;
-                        //                        break;
-                        //
-                        //                    // 连接服务器
-                        //                    case SIM_TCP_1:
+//                        Serial.println(F("AT+CSTT=\"CMNET\""));
+//                        delay(500);
+//                        Serial.println(F("AT+CIICR"));
+//                        delay(500);
+//                        Serial.println(F("AT+CIFSR"));
+//                        delay(2000);
+//
+//                        simStep = SIM_TCP_1;
+//                        break;
+//
+//                    // 连接服务器
+//                    case SIM_TCP_1:
                         Serial.print(F("AT+CIPSTART=\"TCP\",\""));
                         Serial.print(TCP_SERVER);
                         Serial.print(F("\",\""));
