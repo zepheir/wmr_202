@@ -534,17 +534,21 @@ void loop()
                         
                     // TODO: 关闭链接和场景
                     case SIM_TCP_10:
+                        // 关闭连接和场景
+                        sim808.TCPShut();
+
+                        // 下一步
                         simStep++;
 //                        simStep = SIM_TCP_OFF;
-                        sim808.TCPShut();
                         break;
                         
                         
-                    // TODO: 断开连接, 重新启动连接程序
+                    // TODO: 再次断开连接, 重新启动连接程序
                     case SIM_TCP_OFF:
+                        // 确认场景已经断开
                         sim808.TCPShut();
                         
-                        // 下一步
+                        // 下一步, 重新开始连接
                         simStep = SIM_TCP_0;
                         break;
                     
