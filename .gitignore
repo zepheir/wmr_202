@@ -10,3 +10,5 @@ wmr_202/Utilities/*
 
 # xcode project ui files
 wmr_202.xcodeproj/project.xcworkspace/xcuserdata/samuel.xcuserdatad/UserInterfaceState.xcuserstate
+
+*.zip
