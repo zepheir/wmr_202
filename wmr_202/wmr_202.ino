@@ -493,7 +493,7 @@ void loop()
                         Serial.println(strSIMInfo);
                         
                         // 判断是否收到的是 "READALL\0"
-                        if ( strcmp(strSIMInfo, "READALL")==0) {
+                        if ( strcmp(strSIMInfo, "READALL\0")==0) {
                             // DEBUG: 串口打印数据
                             Serial.println("read all data");
                             
@@ -632,62 +632,110 @@ void drawInitialPage (void)
     
 }
 
-
-
+// TODO: 修改字体, 在一个画面里面显示IMEI码
 void drawWmrPage (void)
 {
     
     // HEADER Define
-    // myOled.setFont(u8g_font_unifont);
-    // digitalWrite(RUNLED, HIGH);
     myOled.drawHLine(0,12,128);
     myOled.setFont(u8g_font_4x6);
     myOled.setPrintPos(3,10);
     myOled.print(sim808.signalLevelBar);
     //    myOled.print(F("**____"));
+    myOled.print(F(" "));
     myOled.print(sim808.replybuffer);
     
-    
-    //    myOled.setPrintPos(80,10);
-    //    myOled.print(F("CHINA MOBILE"));
+//        myOled.setPrintPos(80,10);
+//        myOled.print(F("CHINA MOBILE"));
     
     
     // Body Define
-    // Body Font
+//    myOled.setFont(u8g_font_4x6);
     myOled.setFont(u8g_font_6x10);
     
-    myOled.setPrintPos(3,25);
-    myOled.print(F("CH0:"));
-    myOled.setPrintPos(27,25);
+    myOled.setPrintPos(3,22);
+    myOled.print(F("CH0: "));
     myOled.print(wmr.data.ch0);
-    // myOled.setPrintPos(90,25);
-    // myOled.print("2.10");
     
     
-    myOled.setPrintPos(3,38);
-    myOled.print(F("CH1:"));
-    myOled.setPrintPos(27,38);
+    myOled.setPrintPos(3,32);
+    myOled.print(F("CH1: "));
     myOled.print(wmr.data.ch1);
-    // myOled.setPrintPos(90,38);
-    // myOled.print("2.10");
     
     
-    myOled.setPrintPos(3,51);
-    myOled.print(F("CH2:"));
-    myOled.setPrintPos(27,51);
+    myOled.setPrintPos(3,42);
+    myOled.print(F("CH2: "));
     myOled.print(wmr.data.ch2);
-    // myOled.setPrintPos(90,51);
-    // myOled.print("2.10");
+
     
-    
-    myOled.setPrintPos(3,64);
-    myOled.print(F("CH3:"));
-    myOled.setPrintPos(27,64);
+    myOled.setPrintPos(3,52);
+    myOled.print(F("CH3: "));
     myOled.print(wmr.data.ch3);
-    // myOled.setPrintPos(90,64);
-    // myOled.print("2.10");
+    
+    
+    // FOOTER DEFINE
+    myOled.drawHLine(0,55,128);
+    myOled.setPrintPos(3,64);
+    myOled.print(F("IMEI "));
+    myOled.print(sim808.getIMEI());
     
     
 }
+
+//void drawWmrPage (void)
+//{
+//    
+//    // HEADER Define
+//    // myOled.setFont(u8g_font_unifont);
+//    // digitalWrite(RUNLED, HIGH);
+//    myOled.drawHLine(0,12,128);
+//    myOled.setFont(u8g_font_4x6);
+//    myOled.setPrintPos(3,10);
+//    myOled.print(sim808.signalLevelBar);
+//    //    myOled.print(F("**____"));
+//    myOled.print(sim808.replybuffer);
+//    
+//    
+//    //    myOled.setPrintPos(80,10);
+//    //    myOled.print(F("CHINA MOBILE"));
+//    
+//    
+//    // Body Define
+//    // Body Font
+//    myOled.setFont(u8g_font_6x10);
+//    
+//    myOled.setPrintPos(3,25);
+//    myOled.print(F("CH0:"));
+//    myOled.setPrintPos(27,25);
+//    myOled.print(wmr.data.ch0);
+//    // myOled.setPrintPos(90,25);
+//    // myOled.print("2.10");
+//    
+//    
+//    myOled.setPrintPos(3,38);
+//    myOled.print(F("CH1:"));
+//    myOled.setPrintPos(27,38);
+//    myOled.print(wmr.data.ch1);
+//    // myOled.setPrintPos(90,38);
+//    // myOled.print("2.10");
+//    
+//    
+//    myOled.setPrintPos(3,51);
+//    myOled.print(F("CH2:"));
+//    myOled.setPrintPos(27,51);
+//    myOled.print(wmr.data.ch2);
+//    // myOled.setPrintPos(90,51);
+//    // myOled.print("2.10");
+//    
+//    
+//    myOled.setPrintPos(3,64);
+//    myOled.print(F("CH3:"));
+//    myOled.setPrintPos(27,64);
+//    myOled.print(wmr.data.ch3);
+//    // myOled.setPrintPos(90,64);
+//    // myOled.print("2.10");
+//    
+//    
+//}
 
 
