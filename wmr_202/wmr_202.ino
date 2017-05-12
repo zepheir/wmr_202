@@ -643,6 +643,8 @@ void drawWmrPage (void)
     myOled.print(sim808.signalLevelBar);
     //    myOled.print(F("**____"));
     myOled.print(F(" "));
+    myOled.print(simStep);
+    myOled.print(F(" "));
     myOled.print(sim808.replybuffer);
     
 //        myOled.setPrintPos(80,10);
