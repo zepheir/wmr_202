@@ -511,8 +511,8 @@ void loop()
                         strncpy(strSIMInfo, sim808.replybuffer, 8);
                         
                         // DEBUG: 串口打印数据
-                        Serial.print("=>");
-                        Serial.println(strSIMInfo);
+//                        Serial.print("=>");
+//                        Serial.println(strSIMInfo);
                         
                         // 下一步
                         simStep = SIM_TCP_3;
@@ -522,13 +522,13 @@ void loop()
                     // @描述: 如果
                     case SIM_TCP_3:
                         // DEBUG: 串口打印数据
-                        Serial.print("cmp str: ");
-                        Serial.println(strSIMInfo);
+//                        Serial.print("cmp str: ");
+//                        Serial.println(strSIMInfo);
                         
                         // 判断是否收到的是 "READALL\0"
                         if ( strcmp(strSIMInfo, "READALL\0")==0) {
                             // DEBUG: 串口打印数据
-                            Serial.println("read all data");
+//                            Serial.println("read all data");
                             
                             // 下一步发送数据
                             simStep = SIM_TCP_4; // 发送所有的数据包
