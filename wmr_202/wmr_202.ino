@@ -262,6 +262,7 @@ void setup()
 // Add loop code
 void loop()
 {
+    uint8_t _i;
     //-----------------------------------------------------------------------
     // TODO: 常规时钟, 每2秒钟执行一次程序
     // @Notice: 需要注意的是每一步的执行时间不能超过2秒钟,
@@ -490,22 +491,42 @@ void loop()
                         
                     // TODO: 发送请求, REQ, 并且接受指令
                     case SIM_TCP_2:
+//                        sim808.readline(500); // 清除之前的残留
                         // 发送指令
                         Serial.println(F("AT+CIPSEND"));
-                        delay(500);
+//                        delay(500);
+                        
+                        // 等待 '>'
+                        _i = 0;
+                        while (sim808.replybuffer[0] != '>') {
+                            sim808.readline(500); // '>'
+                            if (_i>3) break;
+                            _i++;
+                        }
+                        
+                        // 发送数据
                         Serial.print(F("{\"TYPE\":\"REQ\",\"IMEI\":\""));
                         Serial.print(sim808.getIMEI());
                         Serial.println(F("\"}\x1a"));
                         
                         // 过滤其他信息
-                        sim808.readline(500);
-                        sim808.readline(500); // >
-                        sim808.readline(500); //
-                        sim808.readline(500); //
-                        sim808.readline(500); // SEND OK
+//                        sim808.readline(500);
+//                        sim808.readline(500); // >
+//                        sim808.readline(500); //
+//                        sim808.readline(500); //
+//                        sim808.readline(500); // SEND OK
+                        
+                        // 等待发送结束
+                        _i = 0;
+                        while (!prog_char_strcmp(sim808.replybuffer, (prog_char*)F("SEND OK"))==0) {
+                            sim808.readline(1000); // 'SEND OK'
+                            if (_i>3) break;
+                            _i++;
+                        }
+                        
                         
                         // 接收从服务器来的数据
-                        sim808.readline(500); // recived
+                        sim808.readline(1000); // recived
                         
                         // 将信息保存至strSIMInfo
                         strncpy(strSIMInfo, sim808.replybuffer, 8);

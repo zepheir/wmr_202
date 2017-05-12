@@ -59,9 +59,9 @@ uint8_t Sim808::readline(uint16_t timeout){
 		while(client808.available()){
 			char c = client808.read();
 
-			if (c=='\r') continue;
+			if (c=='\x0D') continue;
 
-			if (c=='\n'){
+			if (c=='\x0A'){
 				if (idx==0) continue; // the first 'nl' is ignored
 
 				timeout = 0;
