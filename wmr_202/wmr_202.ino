@@ -181,6 +181,8 @@ void drawInitialPage (void);
 void drawWmrPage (void);
 void picture_loop(void (*draw_fn)(void));
 
+//
+uint32_t transData(char* data);
 
 //------------------------------------------
 // Without the time delay filter
@@ -263,6 +265,7 @@ void setup()
 void loop()
 {
     uint8_t _i;
+    
     //-----------------------------------------------------------------------
     // TODO: 常规时钟, 每2秒钟执行一次程序
     // @Notice: 需要注意的是每一步的执行时间不能超过2秒钟,
@@ -508,13 +511,7 @@ void loop()
                         Serial.print(F("{\"TYPE\":\"REQ\",\"IMEI\":\""));
                         Serial.print(sim808.getIMEI());
                         Serial.println(F("\"}\x1a"));
-                        
-                        // 过滤其他信息
-//                        sim808.readline(500);
-//                        sim808.readline(500); // >
-//                        sim808.readline(500); //
-//                        sim808.readline(500); //
-//                        sim808.readline(500); // SEND OK
+
                         
                         // 等待发送结束
                         _i = 0;
@@ -530,6 +527,30 @@ void loop()
                         
                         // 将信息保存至strSIMInfo
                         strncpy(strSIMInfo, sim808.replybuffer, 8);
+                        
+                        // 判断是否需要设置数据
+                        if ( strcmp(strSIMInfo, "SETDATA\0")==0) {
+//                            // DEBUG: 串口打印数据
+//                            // Serial.println("set all data");
+//                            
+                            // 设置模块数据
+//                            unsigned long _d;
+//                            sim808.replybuffer[8]<<24+sim808.replybuffer[9]<<16++sim808.replybuffer[11]
+//                            _d = sim808.replybuffer[8]<<8;
+//                            _d += sim808.replybuffer[9];
+//                            _d = _d<<8;
+//                            _d += sim808.replybuffer[10];
+//                            wmr.data.ch0 = _d;
+                            wmr.data.ch0 = transData(sim808.replybuffer+8);
+                            wmr.data.ch1 = transData(sim808.replybuffer+12);
+                            wmr.data.ch2 = transData(sim808.replybuffer+16);;
+                            wmr.data.ch3 = transData(sim808.replybuffer+20);;
+//
+                            // 设置完成后, 去关闭连接
+                            simStep = SIM_TCP_10; // 发送所有的数据包
+                            break;
+                        }
+                        
                         
                         // DEBUG: 串口打印数据
 //                        Serial.print("=>");
@@ -554,8 +575,6 @@ void loop()
                             // 下一步发送数据
                             simStep = SIM_TCP_4; // 发送所有的数据包
                             break;
-                        }else if (strcmp(strSIMInfo, "CH")){
-                            ;
                         }
                         
                         // 下一步, 如果不是发送数据, 去关闭链接
@@ -738,60 +757,19 @@ void drawWmrPage (void)
     
 }
 
-//void drawWmrPage (void)
-//{
-//    
-//    // HEADER Define
-//    // myOled.setFont(u8g_font_unifont);
-//    // digitalWrite(RUNLED, HIGH);
-//    myOled.drawHLine(0,12,128);
-//    myOled.setFont(u8g_font_4x6);
-//    myOled.setPrintPos(3,10);
-//    myOled.print(sim808.signalLevelBar);
-//    //    myOled.print(F("**____"));
-//    myOled.print(sim808.replybuffer);
-//    
-//    
-//    //    myOled.setPrintPos(80,10);
-//    //    myOled.print(F("CHINA MOBILE"));
-//    
-//    
-//    // Body Define
-//    // Body Font
-//    myOled.setFont(u8g_font_6x10);
-//    
-//    myOled.setPrintPos(3,25);
-//    myOled.print(F("CH0:"));
-//    myOled.setPrintPos(27,25);
-//    myOled.print(wmr.data.ch0);
-//    // myOled.setPrintPos(90,25);
-//    // myOled.print("2.10");
-//    
-//    
-//    myOled.setPrintPos(3,38);
-//    myOled.print(F("CH1:"));
-//    myOled.setPrintPos(27,38);
-//    myOled.print(wmr.data.ch1);
-//    // myOled.setPrintPos(90,38);
-//    // myOled.print("2.10");
-//    
-//    
-//    myOled.setPrintPos(3,51);
-//    myOled.print(F("CH2:"));
-//    myOled.setPrintPos(27,51);
-//    myOled.print(wmr.data.ch2);
-//    // myOled.setPrintPos(90,51);
-//    // myOled.print("2.10");
-//    
-//    
-//    myOled.setPrintPos(3,64);
-//    myOled.print(F("CH3:"));
-//    myOled.setPrintPos(27,64);
-//    myOled.print(wmr.data.ch3);
-//    // myOled.setPrintPos(90,64);
-//    // myOled.print("2.10");
-//    
-//    
-//}
+
+unsigned long transData(char* data)
+{
+    int8_t i=0;
+    unsigned long _d =0;
+    
+    while (i<4) {
+        _d = _d<<8;
+        _d = _d + *(data+i);
+        i++;
+    }
+    
+    return _d;
+}
 
 
