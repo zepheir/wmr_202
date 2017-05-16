@@ -159,7 +159,21 @@ char* strSimSignalLevel="______";
 uint8_t simSignalLevel=0;
 uint8_t simTemp1=0;
 uint8_t simStep=0;
+
+
 char strSIMInfo[8];
+
+union{
+    char strSIMData[16];
+    struct{
+        uint32_t d0;
+        uint32_t d1;
+        uint32_t d2;
+        uint32_t d3;
+    };
+} SIMData;
+
+
 #define TCP_SERVER		"121.199.16.44"
 #define TCP_PORT		"6969"
 // GPRS data send every 60*5=300000 ms
@@ -181,8 +195,7 @@ void drawInitialPage (void);
 void drawWmrPage (void);
 void picture_loop(void (*draw_fn)(void));
 
-//
-uint32_t transData(char* data);
+
 
 //------------------------------------------
 // Without the time delay filter
@@ -523,28 +536,23 @@ void loop()
                         
                         
                         // 接收从服务器来的数据
-                        sim808.readline(1000); // recived
+                        sim808.readBuff(1000); // recived
                         
                         // 将信息保存至strSIMInfo
-                        strncpy(strSIMInfo, sim808.replybuffer, 8);
-                        
+                        memcpy(strSIMInfo, sim808.replybuffer, 8);
+//                        memcpy(strSIMData, sim808.replybuffer+8, 16);
+                        memcpy(SIMData.strSIMData, sim808.replybuffer+8, 16);
+                                                
                         // 判断是否需要设置数据
                         if ( strcmp(strSIMInfo, "SETDATA\0")==0) {
 //                            // DEBUG: 串口打印数据
 //                            // Serial.println("set all data");
 //                            
                             // 设置模块数据
-//                            unsigned long _d;
-//                            sim808.replybuffer[8]<<24+sim808.replybuffer[9]<<16++sim808.replybuffer[11]
-//                            _d = sim808.replybuffer[8]<<8;
-//                            _d += sim808.replybuffer[9];
-//                            _d = _d<<8;
-//                            _d += sim808.replybuffer[10];
-//                            wmr.data.ch0 = _d;
-                            wmr.data.ch0 = transData(sim808.replybuffer+8);
-                            wmr.data.ch1 = transData(sim808.replybuffer+12);
-                            wmr.data.ch2 = transData(sim808.replybuffer+16);;
-                            wmr.data.ch3 = transData(sim808.replybuffer+20);;
+                            wmr.data.ch0 = SIMData.d0;
+                            wmr.data.ch1 = SIMData.d1;
+                            wmr.data.ch2 = SIMData.d2;
+                            wmr.data.ch3 = SIMData.d3;
 //
                             // 设置完成后, 去关闭连接
                             simStep = SIM_TCP_10; // 发送所有的数据包
@@ -757,19 +765,5 @@ void drawWmrPage (void)
     
 }
 
-
-unsigned long transData(char* data)
-{
-    int8_t i=0;
-    unsigned long _d =0;
-    
-    while (i<4) {
-        _d = _d<<8;
-        _d = _d + *(data+i);
-        i++;
-    }
-    
-    return _d;
-}
 
 

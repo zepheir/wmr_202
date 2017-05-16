@@ -91,6 +91,34 @@ uint8_t Sim808::readline(uint16_t timeout){
 	return idx;
 }
 
+// 读写一组数据, 不是字符串, 不能用0d0a来判断
+uint8_t Sim808::readBuff(uint16_t timeout){
+    
+    uint8_t idx = 0;
+    // bool readed=false;
+    
+    
+    while(timeout--){
+        if(idx>=255) break;
+        
+        while(client808.available()){
+            char c = client808.read();
+            
+//            if (c=='\x0A'){
+//                if (idx==0) continue; // the first 'nl' is ignored
+//            }
+            
+            replybuffer[idx]=c;
+            idx++;
+        }
+        
+        if(timeout == 0) break;
+        delay(1);
+    }
+    
+    
+    return idx;
+}
 
 
 // from adafruit_FONA

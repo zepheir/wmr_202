@@ -107,6 +107,7 @@ public:
 	char* readData(char* buff, uint16_t timeout);
 	char* readData(char* buff);
 	uint8_t readline(uint16_t timeout);
+    uint8_t readBuff(uint16_t timeout);
 
 	void sendCmd(char* cmd);
 
