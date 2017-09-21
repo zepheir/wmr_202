@@ -159,6 +159,7 @@ char* strSimSignalLevel="______";
 uint8_t simSignalLevel=0;
 uint8_t simTemp1=0;
 uint8_t simStep=0;
+bool simIniDevData=0;         // 初始化模块数据标记: 如果为0, 说明没有从服务器读取数据; 如果为1, 说明已经从服务器读取过数据并设置过了
 
 
 char strSIMInfo[8];
@@ -459,6 +460,21 @@ void loop()
             
         }
         
+        // TODO: 保存数据去EPROM
+        // 每小时保存一次: 1小时 = 60*60*1000 = 3600000
+        static unsigned long timerEPROM = millis();
+        if(millis() - timerEPROM >= 3600000){
+            timerEPROM = millis();
+            
+            // 存储数据
+            wmr.updateRom(DATAADDR0, wmr.data.ch0);
+            wmr.updateRom(DATAADDR1, wmr.data.ch1);
+            wmr.updateRom(DATAADDR2, wmr.data.ch2);
+            wmr.updateRom(DATAADDR3, wmr.data.ch3);
+
+        }
+        
+        
         // TODO: 服务器通讯
         // 5000ms时钟
         static unsigned long timer5000ms = millis();
@@ -505,7 +521,7 @@ void loop()
                         simStep = SIM_TCP_2;
                         break;
                         
-                    // TODO: 发送请求, REQ, 并且接受指令
+                    // TODO: 发送请求, INI或者REQ, 并且接受指令
                     case SIM_TCP_2:
 //                        sim808.readline(500); // 清除之前的残留
                         // 发送指令
@@ -520,8 +536,13 @@ void loop()
                             _i++;
                         }
                         
+                        // TODO: 如果模块数据初始化了, 就执行REQ, 否则发送INI进行初始化
                         // 发送数据
-                        Serial.print(F("{\"TYPE\":\"REQ\",\"IMEI\":\""));
+                        if(simIniDevData){
+                            Serial.print(F("{\"TYPE\":\"REQ\",\"IMEI\":\""));
+                        }else{
+                            Serial.print(F("{\"TYPE\":\"INI\",\"IMEI\":\""));
+                        }
                         Serial.print(sim808.getIMEI());
                         Serial.println(F("\"}\x1a"));
 
@@ -553,6 +574,11 @@ void loop()
                             wmr.data.ch1 = SIMData.d1;
                             wmr.data.ch2 = SIMData.d2;
                             wmr.data.ch3 = SIMData.d3;
+                            
+                            // 如果是初始化模块数据, 设置初始化成功;
+                            if (simIniDevData==0) {
+                                simIniDevData=1;
+                            }
 //
                             // 设置完成后, 去关闭连接
                             simStep = SIM_TCP_10; // 发送所有的数据包
@@ -618,6 +644,16 @@ void loop()
                         // 关闭连接和场景
                         sim808.TCPShut();
 
+                        // 如果初始化不成功, 就从EEPROM中读取
+                        if (simIniDevData==0) {
+                            wmr.data.ch0 = wmr.readRom(DATAADDR0);
+                            wmr.data.ch1 = wmr.readRom(DATAADDR1);
+                            wmr.data.ch2 = wmr.readRom(DATAADDR2);
+                            wmr.data.ch3 = wmr.readRom(DATAADDR3);
+                            
+                            simIniDevData=1;
+                        }
+
                         // 下一步
                         simStep++;
 //                        simStep = SIM_TCP_OFF;
@@ -628,6 +664,16 @@ void loop()
                     case SIM_TCP_OFF:
                         // 确认场景已经断开
                         sim808.TCPShut();
+                        
+//                        // 如果初始化不成功, 就从EEPROM中读取
+//                        if (simIniDevData==0) {
+//                            wmr.data.ch0 = wmr.readRom(DATAADDR0);
+//                            wmr.data.ch1 = wmr.readRom(DATAADDR1);
+//                            wmr.data.ch2 = wmr.readRom(DATAADDR2);
+//                            wmr.data.ch3 = wmr.readRom(DATAADDR3);
+//                            
+//                            simIniDevData=1;
+//                        }
                         
                         // 下一步, 重新开始连接
                         simStep = SIM_TCP_0;
